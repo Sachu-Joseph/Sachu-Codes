@@ -5,16 +5,16 @@ import re
 import random
 from datetime import datetime
 
-# Load dataset
+
 def load_dataset():
     df = pd.read_csv("/mnt/data/helpdesk_customer_tickets.csv")
     return df
 
 
-# Load spaCy model for NLP
+
 nlp = spacy.load("en_core_web_sm")
 
-# Initialize SQLite database
+
 def init_db():
     conn = sqlite3.connect("support_interactions.db")
     cursor = conn.cursor()
@@ -31,7 +31,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Log interaction to database
 def log_interaction(query, response, sentiment, escalated=False):
     conn = sqlite3.connect("support_interactions.db")
     cursor = conn.cursor()
@@ -42,7 +41,7 @@ def log_interaction(query, response, sentiment, escalated=False):
     )
     conn.commit()
     conn.close()
-# Find best match from past queries
+
 def get_similar_response(query):
     query_vec = vectorizer.transform([query])
     similarity = cosine_similarity(query_vec, tfidf_matrix)
@@ -51,7 +50,6 @@ def get_similar_response(query):
         return df.iloc[index]["response"]
     return None
 
-# FAQ database (mock)
 FAQ = {
     "hours": "Our support hours are 9 AM to 5 PM, Monday to Friday.",
     "shipping": "Shipping takes 3-5 business days for standard delivery.",
@@ -59,14 +57,14 @@ FAQ = {
     "contact": "Reach us at support@example.com or call 1-800-123-4567."
 }
 
-# Mock order database
+
 ORDERS = {
     "ORD123": {"status": "Shipped", "delivery_date": "2025-05-10"},
     "ORD456": {"status": "Processing", "delivery_date": "2025-05-15"},
     "ORD789": {"status": "Delivered", "delivery_date": "2025-05-01"}
 }
 
-# Intent recognition
+
 def detect_intent(query):
     doc = nlp(query.lower())
     if any(token.lemma_ in ["faq", "question", "help"] for token in doc):
@@ -80,12 +78,12 @@ def detect_intent(query):
     else:
         return "general"
 
-# Extract order ID from query
+
 def extract_order_id(query):
     match = re.search(r"\b(ORD\d{3})\b", query, re.IGNORECASE)
     return match.group(1) if match else None
 
-# Sentiment analysis
+
 def analyze_sentiment(query):
     blob = TextBlob(query)
     polarity = blob.sentiment.polarity
@@ -96,7 +94,6 @@ def analyze_sentiment(query):
     else:
         return "neutral"
 
-# Handle FAQ queries
 def handle_faq(query):
     query_lower = query.lower()
     for key, answer in FAQ.items():
@@ -104,7 +101,7 @@ def handle_faq(query):
             return answer
     return "I'm not sure about that. Could you clarify or ask something else?"
 
-# Handle order status
+
 def handle_order_status(query):
     order_id = extract_order_id(query)
     if order_id and order_id in ORDERS:
@@ -112,7 +109,6 @@ def handle_order_status(query):
         return f"Order {order_id} is {order['status']}. Estimated delivery: {order['delivery_date']}."
     return "Please provide a valid order ID (e.g., ORD123)."
 
-# Handle refund requests
 def handle_refund(query):
     order_id = extract_order_id(query)
     if order_id and order_id in ORDERS:
@@ -122,18 +118,18 @@ def handle_refund(query):
             return f"Cannot process refund for {order_id}. Order is still {ORDERS[order_id]['status']}."
     return "Please provide a valid order ID to process a refund."
 
-# Escalate to human agent
+
 def escalate_to_agent(query, sentiment):
     if sentiment == "negative":
         return "I'm sorry you're frustrated. Connecting you to a human agent now."
     return "Escalating your query to a human agent. Please wait."
 
-# Generate response based on intent
+
 def generate_response(query):
     sentiment = analyze_sentiment(query)
     intent = detect_intent(query)
     
-    # Tailor response tone based on sentiment
+
     greeting = {
         "positive": "Happy to help! ",
         "negative": "I'm sorry you're having trouble. ",
@@ -156,7 +152,7 @@ def generate_response(query):
     log_interaction(query, response, sentiment)
     return greeting + response
 
-# Main chatbot loop
+
 def main():
     init_db()
     print("Welcome to Customer Support Chatbot! Type 'exit' to quit.")
@@ -180,3 +176,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
